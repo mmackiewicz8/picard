@@ -49,9 +49,7 @@ import picard.filter.CountingPairedFilter;
 import picard.util.MathUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static picard.cmdline.StandardOptionDefinitions.MINIMUM_MAPPING_QUALITY_SHORT_NAME;
 
@@ -122,13 +120,25 @@ static final String USAGE_DETAILS = "<p>This tool collects metrics about the fra
     @ArgumentCollection
     protected IntervalArgumentCollection intervalArugmentCollection = makeIntervalArgumentCollection();
 
+    @Argument(doc="Output for Theoretical Sensitivity metrics.  Default is null.", optional = true)
+    public File THEORETICAL_SENSITIVITY_OUTPUT;
+
+    @Argument(doc="Allele fraction to run theoretical sensitivity on.", optional = true)
+    public List<Double> ALLELE_FRACTION = new LinkedList<>(Arrays.asList(0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5));
+    @Option(doc="Allele fraction to run theoretical sensitivity on.", optional = true)
+    public List<Double> ALLELE_FRACTION = new ArrayList<>(Arrays.asList(0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5));
+
     @Argument(doc = "If true, fast algorithm is used.")
     public boolean USE_FAST_ALGORITHM = false;
 
     @Argument(doc = "Average read length in the file. Default is 150.", optional = true)
     public int READ_LENGTH = 150;
 
-    protected File INTERVALS = null;
+    @Argument(doc = "An interval list file that contains the positions to restrict the assessment. Please note that " +
+            "all bases of reads that overlap these intervals will be considered, even if some of those bases extend beyond the boundaries of " +
+            "the interval. The ideal use case for this argument is to use it to restrict the calculation to a subset of (whole) contigs.",
+            optional = true)
+    public File INTERVALS = null;
 
     private SAMFileHeader header = null;
 
@@ -455,6 +465,9 @@ static final String USAGE_DETAILS = "<p>This tool collects metrics about the fra
         if (INTERVALS != null) {
             IOUtil.assertFileIsReadable(INTERVALS);
         }
+        if (THEORETICAL_SENSITIVITY_OUTPUT != null) {
+            IOUtil.assertFileIsWritable(THEORETICAL_SENSITIVITY_OUTPUT);
+        }
 
         // it doesn't make sense for the locus accumulation cap to be lower than the coverage cap
         if (LOCUS_ACCUMULATION_CAP < COVERAGE_CAP) {
@@ -490,6 +503,10 @@ static final String USAGE_DETAILS = "<p>This tool collects metrics about the fra
         final MetricsFile<WgsMetrics, Integer> out = getMetricsFile();
         processor.addToMetricsFile(out, INCLUDE_BQ_HISTOGRAM, dupeFilter, mapqFilter, pairFilter);
         out.write(OUTPUT);
+
+        if (THEORETICAL_SENSITIVITY_OUTPUT != null) {
+            TheoreticalSensitivity.writeOutput(THEORETICAL_SENSITIVITY_OUTPUT, getMetricsFile(), SAMPLE_SIZE, collector.getUnfilteredDepthHistogram(),collector.getUnfilteredBaseQHistogram(), ALLELE_FRACTION);
+        }
 
         return 0;
     }

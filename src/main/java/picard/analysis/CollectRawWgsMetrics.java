@@ -26,9 +26,12 @@ package picard.analysis;
 
 import htsjdk.samtools.util.Histogram;
 import htsjdk.samtools.util.IntervalList;
+import org.broadinstitute.barclay.argparser.Argument;
 import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
 import org.broadinstitute.barclay.help.DocumentedFeature;
 import picard.cmdline.programgroups.DiagnosticsAndQCProgramGroup;
+
+import static picard.cmdline.StandardOptionDefinitions.MINIMUM_MAPPING_QUALITY_SHORT_NAME;
 
 /**
  * Computes a number of metrics that are useful for evaluating coverage and performance of whole genome sequencing
@@ -104,6 +107,11 @@ public class CollectRawWgsMetrics extends CollectWgsMetrics{
             "<a href='https://broadinstitute.github.io/picard/picard-metric-definitions.html#CollectWgsMetrics.WgsMetrics'>" +
             "the WgsMetrics documentation</a> for detailed explanations of the output metrics." +
             "<hr />";
+    @Argument(shortName=MINIMUM_MAPPING_QUALITY_SHORT_NAME, doc="Minimum mapping quality for a read to contribute coverage.")
+    public int MINIMUM_MAPPING_QUALITY = 0;
+
+    @Argument(shortName="Q", doc="Minimum base quality for a base to contribute coverage.")
+    public int MINIMUM_BASE_QUALITY = 3;
 
     public CollectRawWgsMetrics() {
         //Override default values inherited from CollectWgsMetrics

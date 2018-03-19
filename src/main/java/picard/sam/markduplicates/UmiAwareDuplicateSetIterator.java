@@ -73,7 +73,7 @@ class UmiAwareDuplicateSetIterator implements CloseableIterator<DuplicateSet> {
      */
     UmiAwareDuplicateSetIterator(final DuplicateSetIterator wrappedIterator, final int maxEditDistanceToJoin,
                                  final String umiTag, final String assignedUmiTag, final boolean allowMissingUmis,
-                                 final UmiMetrics metrics) {
+                                 final String consensus, final UmiMetrics metrics) {
         this.wrappedIterator = wrappedIterator;
         this.maxEditDistanceToJoin = maxEditDistanceToJoin;
         this.umiTag = umiTag;
@@ -130,6 +130,7 @@ class UmiAwareDuplicateSetIterator implements CloseableIterator<DuplicateSet> {
 
         List<DuplicateSet> duplicateSets = umiGraph.joinUmisIntoDuplicateSets(maxEditDistanceToJoin);
 
+        System.out.println(duplicateSets.size());
         // Collect statistics on numbers of observed and inferred UMIs
         // and total numbers of observed and inferred UMIs
         for (DuplicateSet ds : duplicateSets) {
@@ -167,10 +168,62 @@ class UmiAwareDuplicateSetIterator implements CloseableIterator<DuplicateSet> {
             }
         }
 
+        // Generate Consensus Reads
+        HashMap<String, SAMRecord> hmap = new HashMap<>();
+        for (DuplicateSet ds : duplicateSets) {
+            List<SAMRecord> records = ds.getRecords();
+            SAMRecord representativeRead = generateConsensus(records);
+            hmap.put(UmiUtil.getRawUMI(representativeRead, umiTag), representativeRead);
+
+            // Add consensus reads
+//            records.add(generateConsensus(records));
+
+//            System.out.println(UmiUtil.getRawUMI(representativeRead, umiTag));
+
+        }
+//        System.out.println("DuplicateSet size = " + duplicateSets.size());
+
+        for (Map.Entry<String, SAMRecord> entry : hmap.entrySet()) {
+
+            SAMRecord first = hmap.get(entry.getKey());
+            SAMRecord second = hmap.get(UmiUtil.reverseUmi(entry.getKey()));
+
+            if(first != null && second != null) {
+//                System.out.println(first.getReadString() + " " + first.getStringAttribute(umiTag));
+//                System.out.println(second.getReadString() + " " + second.getStringAttribute(umiTag));
+//                System.out.println();
+            }
+        }
+
         // Update UMI metrics associated with each duplicate set
         metrics.DUPLICATE_SETS_WITH_UMI += duplicateSets.size();
         metrics.DUPLICATE_SETS_IGNORING_UMI++;
 
         nextSetsIterator = duplicateSets.iterator();
     }
+
+    SAMRecord generateConsensus(List<SAMRecord> records) {
+        SAMRecord consensus = records.get(0).deepCopy();
+
+        //        SAMRecord consensus = new SAMRecord(records.get(0).getHeader());
+
+        int readLength = records.get(0).getReadLength();
+        byte consensusRead[] = records.get(0).getReadBases().clone();
+
+        for (SAMRecord rec : records) {
+            byte recRead[] = rec.getReadBases();
+            for(int k = 0;k < readLength;k++) {
+                if(consensusRead[k] != recRead[k]) {
+                    consensusRead[k] = 'N';
+                }
+            }
+        }
+
+        consensus.setAttribute("cD", records.size());
+
+        //System.out.println("Consensus");
+        //System.out.println(new String(consensusRead));
+        return consensus;
+    }
+
 }

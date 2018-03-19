@@ -40,4 +40,16 @@ public class UmiUtil {
         if (umi == null) return null;
         return umi.replace("-", "");
     }
+
+    public static String getRawUMI(final SAMRecord record, final String umiTag) {
+        return record.getStringAttribute(umiTag);
+    }
+
+    public static String reverseUmi(String umi) {
+        umi =   umi.substring(4, 7) + "-" +
+                umi.substring(0, 3);
+
+        return umi;
+    }
+
 }

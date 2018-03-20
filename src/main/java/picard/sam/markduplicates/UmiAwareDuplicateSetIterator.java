@@ -130,7 +130,7 @@ class UmiAwareDuplicateSetIterator implements CloseableIterator<DuplicateSet> {
 
         List<DuplicateSet> duplicateSets = umiGraph.joinUmisIntoDuplicateSets(maxEditDistanceToJoin);
 
-        System.out.println(duplicateSets.size());
+        //System.out.println(duplicateSets.size());
         // Collect statistics on numbers of observed and inferred UMIs
         // and total numbers of observed and inferred UMIs
         for (DuplicateSet ds : duplicateSets) {
@@ -189,9 +189,16 @@ class UmiAwareDuplicateSetIterator implements CloseableIterator<DuplicateSet> {
             SAMRecord second = hmap.get(UmiUtil.reverseUmi(entry.getKey()));
 
             if(first != null && second != null) {
-//                System.out.println(first.getReadString() + " " + first.getStringAttribute(umiTag));
-//                System.out.println(second.getReadString() + " " + second.getStringAttribute(umiTag));
-//                System.out.println();
+                List<SAMRecord> duplexList = Arrays.asList(first, second);
+                SAMRecord duplexConsensus = generateConsensus(duplexList);
+                System.out.println(first.getReadString() + " " + first.getStringAttribute(umiTag) + " " + first.getIntegerAttribute("cD"));
+                System.out.println(second.getReadString() + " " + second.getStringAttribute(umiTag) + " " + second.getIntegerAttribute("cD"));
+                System.out.println(duplexConsensus.getReadString() + " duplex consensus");
+                System.out.println(duplexConsensus.getReadString().replace("A", " ")
+                        .replace("T", " ")
+                        .replace("C", " ")
+                        .replace("G", " "));
+                System.out.println();
             }
         }
 
@@ -219,6 +226,7 @@ class UmiAwareDuplicateSetIterator implements CloseableIterator<DuplicateSet> {
             }
         }
 
+        consensus.setReadBases(consensusRead);
         consensus.setAttribute("cD", records.size());
 
         //System.out.println("Consensus");

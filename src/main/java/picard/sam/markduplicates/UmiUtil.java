@@ -46,6 +46,8 @@ public class UmiUtil {
     }
 
     public static String reverseUmi(String umi) {
+        if(umi == null) return null;
+        if(umi.length() < 7) return null;
         umi =   umi.substring(4, 7) + "-" +
                 umi.substring(0, 3);
 

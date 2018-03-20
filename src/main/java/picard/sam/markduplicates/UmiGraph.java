@@ -120,7 +120,7 @@ public class UmiGraph {
         // Assign UMIs to duplicateSets
         final Map<String, Integer> duplicateSetsFromUmis = getDuplicateSetsFromUmis();
         for (SAMRecord rec : records) {
-            final String umi = UmiUtil.getRawUMI(rec, umiTag);
+            final String umi = UmiUtil.getSanitizedUMI(rec, umiTag);
             final Integer duplicateSetIndex = duplicateSetsFromUmis.get(umi);
 
             if (duplicateSets.containsKey(duplicateSetIndex)) {

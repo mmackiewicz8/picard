@@ -426,7 +426,7 @@ public class IlluminaBasecallsToSam extends CommandLineProgram {
             File outputFile = new File(row.getField("OUTPUT"));
 
             if(PROCESS_SINGLE_TILE != null){
-                outputFile = new File(outputFile.getParentFile().getAbsolutePath(), PROCESS_SINGLE_TILE.toString() + outputFile.getName());
+                outputFile = new File(outputFile.getParentFile().getAbsolutePath(),     PROCESS_SINGLE_TILE.toString() + outputFile.getName());
             }
 
             final SAMFileWriterWrapper writer = buildSamFileWriter(outputFile,
@@ -527,6 +527,11 @@ public class IlluminaBasecallsToSam extends CommandLineProgram {
 
         if ((FIVE_PRIME_ADAPTER == null) != (THREE_PRIME_ADAPTER == null)) {
             messages.add("THREE_PRIME_ADAPTER and FIVE_PRIME_ADAPTER must either both be null or both be set.");
+        }
+
+        if(PROCESS_SINGLE_TILE != null) {
+            TILE_LIMIT = 1;
+            FIRST_TILE = PROCESS_SINGLE_TILE;
         }
 
         if (messages.isEmpty()) {
